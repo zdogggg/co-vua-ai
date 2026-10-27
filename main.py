@@ -1,10 +1,9 @@
 """
 main.py - Giao diện đồ họa trò chơi Cờ Vua AI bằng Pygame.
-Thiết kế cao cấp, sắc nét chuẩn 1:1 với Windows DPI Awareness:
-- Kích hoạt DPI Awareness giúp bàn cờ, quân cờ và chữ không bao giờ bị mờ hay vỡ nét trên màn hình 125%/150%.
-- Quân cờ vector Lichess cburnett chuẩn HD, tỷ lệ 85% thoáng đãng, không đè lên viền ô cờ.
-- Bố cục Sidebar căn chỉnh theo tọa độ chuẩn (midleft/midright), các hàng và nhãn thẳng tắp.
-- Loại bỏ icon con rắn mặc định ở góc trên bên trái cửa sổ.
+Kích thước lớn 1220x800 chuẩn HD, siêu nét, thoáng đãng và dễ nhìn trên mọi màn hình.
+- Bật Windows DPI Awareness giúp hình ảnh sắc nét chuẩn 1:1, không bị mờ do tỉ lệ phóng to màn hình.
+- Ô cờ 100x100, quân cờ 84x84 tỷ lệ chuẩn quốc tế, không đè lấn viền.
+- Sidebar rộng 420px bố trí rộng rãi, chữ to rõ ràng, các thông số căn thẳng tắp.
 - Đầy đủ tính năng: Minimax, Alpha-Beta, luồng phụ chống treo UI, Undo, Ván mới.
 """
 
@@ -20,7 +19,6 @@ import chess
 if sys.platform == "win32":
     try:
         import ctypes
-        # SetProcessDpiAwareness(1) = PROCESS_SYSTEM_DPI_AWARE
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
     except Exception:
         try:
@@ -39,15 +37,15 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-# Kích thước chuẩn
-KICH_THUOC_O = 80
-BAN_CO_SIZE = KICH_THUOC_O * 8  # 640 x 640
-QUAN_CO_SIZE = 68               # Tỷ lệ 85% giúp quân cờ thoáng và không chạm viền
+# Kích thước chuẩn lớn, dễ nhìn
+KICH_THUOC_O = 100
+BAN_CO_SIZE = KICH_THUOC_O * 8  # 800 x 800
+QUAN_CO_SIZE = 84               # Tỷ lệ 84% giúp quân cờ to rõ, thoáng đãng
 QUAN_CO_OFFSET = (KICH_THUOC_O - QUAN_CO_SIZE) // 2
 
-SIDEBAR_WIDTH = 340
-CHIEU_RONG = BAN_CO_SIZE + SIDEBAR_WIDTH
-CHIEU_CAO = BAN_CO_SIZE
+SIDEBAR_WIDTH = 420
+CHIEU_RONG = BAN_CO_SIZE + SIDEBAR_WIDTH  # 1220 px
+CHIEU_CAO = BAN_CO_SIZE                   # 800 px
 
 # Bảng màu bàn cờ (Lichess Wood Theme)
 MAU_O_SANG = (240, 217, 181)       # Màu kem gỗ
@@ -60,7 +58,7 @@ MAU_NEN_SIDEBAR = (22, 21, 18)     # Nền tối Obsidian
 MAU_THE_CARD = (32, 30, 27)        # Nền card
 MAU_VIEN_CARD = (48, 45, 40)       # Viền card mỏng
 MAU_CHU_CHINH = (240, 240, 240)    # Trắng sáng
-MAU_CHU_PHU = (150, 145, 138)      # Xám nhẹ
+MAU_CHU_PHU = (155, 150, 142)      # Xám nhẹ
 MAU_VANG_DIEM = (245, 195, 65)     # Vàng gold
 MAU_XANH_LA = (98, 158, 42)        # Xanh lá active
 MAU_XANH_HOVER = (112, 175, 52)
@@ -81,7 +79,7 @@ class NutBam:
         hover_color=MAU_NUT_XAM_HOVER,
         active_color=MAU_XANH_LA,
         text_color=MAU_CHU_CHINH,
-        border_radius=7,
+        border_radius=8,
     ):
         self.rect = rect
         self.text = text
@@ -121,7 +119,7 @@ class GameCoVuong:
         pygame.init()
         pygame.font.init()
 
-        # Loại bỏ hoàn toàn icon con rắn ở góc trên cửa sổ bằng surface trong suốt
+        # Loại bỏ icon con rắn ở góc trên cửa sổ bằng surface trong suốt
         icon_trong_suot = pygame.Surface((32, 32), pygame.SRCALPHA)
         icon_trong_suot.fill((0, 0, 0, 0))
         pygame.display.set_icon(icon_trong_suot)
@@ -131,13 +129,13 @@ class GameCoVuong:
         self.screen = pygame.display.set_mode((CHIEU_RONG, CHIEU_CAO))
         self.clock = pygame.time.Clock()
 
-        # Hệ thống font Segoe UI đồng nhất
-        self.font_tieu_de = pygame.font.SysFont("segoeui", 22, bold=True)
-        self.font_muc = pygame.font.SysFont("segoeui", 14, bold=True)
-        self.font_chu = pygame.font.SysFont("segoeui", 13)
-        self.font_chu_dam = pygame.font.SysFont("segoeui", 13, bold=True)
-        self.font_nho_dam = pygame.font.SysFont("segoeui", 11, bold=True)
-        self.font_toado = pygame.font.SysFont("segoeui", 11, bold=True)
+        # Hệ thống font Segoe UI cỡ lớn, rõ nét
+        self.font_tieu_de = pygame.font.SysFont("segoeui", 26, bold=True)
+        self.font_muc = pygame.font.SysFont("segoeui", 17, bold=True)
+        self.font_chu = pygame.font.SysFont("segoeui", 15)
+        self.font_chu_dam = pygame.font.SysFont("segoeui", 15, bold=True)
+        self.font_nho_dam = pygame.font.SysFont("segoeui", 13, bold=True)
+        self.font_toado = pygame.font.SysFont("segoeui", 13, bold=True)
 
         # Trạng thái bàn cờ
         self.ban_co = BanCo()
@@ -165,7 +163,7 @@ class GameCoVuong:
         self.khoi_tao_nut_bam()
 
     def tai_hinh_anh_quan_co(self):
-        """Nạp ảnh quân cờ vector cburnett và scale sắc nét về QUAN_CO_SIZE."""
+        """Nạp ảnh quân cờ vector cburnett và scale sắc nét về QUAN_CO_SIZE (84x84)."""
         ten_cac_quan = ["wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"]
         for ten in ten_cac_quan:
             path = os.path.join("assets", "pieces", f"{ten}.png")
@@ -174,53 +172,55 @@ class GameCoVuong:
                 self.quan_co_images[ten] = pygame.transform.smoothscale(img, (QUAN_CO_SIZE, QUAN_CO_SIZE))
 
     def khoi_tao_nut_bam(self):
-        """Khởi tạo các nút bấm thẳng hàng tuyệt đối."""
-        bx = BAN_CO_SIZE + 16
-        bw = SIDEBAR_WIDTH - 32
+        """Khởi tạo các nút bấm kích thước lớn, thẳng hàng tuyệt đối."""
+        bx = BAN_CO_SIZE + 24
+        bw = SIDEBAR_WIDTH - 48
 
-        # Nút chọn thuật toán (Card cài đặt y=134)
-        btn_w = (bw - 24 - 8) // 2
+        # Nút chọn thuật toán (Card cài đặt)
+        btn_w = (bw - 28 - 10) // 2
         self.btn_alphabeta = NutBam(
-            pygame.Rect(bx + 12, 168, btn_w, 34),
+            pygame.Rect(bx + 14, 210, btn_w, 42),
             "Alpha-Beta",
             self.font_chu_dam,
         )
         self.btn_minimax = NutBam(
-            pygame.Rect(bx + 12 + btn_w + 8, 168, btn_w, 34),
+            pygame.Rect(bx + 14 + btn_w + 10, 210, btn_w, 42),
             "Minimax",
             self.font_chu_dam,
         )
 
-        # Nút tăng giảm độ sâu (Cùng hàng y=232)
-        y_stepper = 218
+        # Nút tăng giảm độ sâu (Cùng hàng y=288)
+        y_stepper = 271
         self.btn_giam_depth = NutBam(
-            pygame.Rect(bx + bw - 12 - 92, y_stepper, 28, 28),
+            pygame.Rect(bx + bw - 14 - 110, y_stepper, 34, 34),
             "\u2212",  # Dấu trừ Unicode chuẩn tâm
             self.font_muc,
-            border_radius=5,
+            border_radius=6,
         )
         self.btn_tang_depth = NutBam(
-            pygame.Rect(bx + bw - 12 - 28, y_stepper, 28, 28),
+            pygame.Rect(bx + bw - 14 - 34, y_stepper, 34, 34),
             "+",
             self.font_muc,
-            border_radius=5,
+            border_radius=6,
         )
 
         # Nút Ván mới & Hoàn tác ở cuối Sidebar
-        btn_action_w = (bw - 8) // 2
+        btn_action_w = (bw - 12) // 2
         self.btn_choi_moi = NutBam(
-            pygame.Rect(bx, 560, btn_action_w, 44),
+            pygame.Rect(bx, 696, btn_action_w, 52),
             "Ván Mới",
             self.font_muc,
             bg_color=(52, 122, 38),
             hover_color=(64, 142, 46),
+            border_radius=10,
         )
         self.btn_hoan_tac = NutBam(
-            pygame.Rect(bx + btn_action_w + 8, 560, btn_action_w, 44),
+            pygame.Rect(bx + btn_action_w + 12, 696, btn_action_w, 52),
             "Hoàn Tác",
             self.font_muc,
             bg_color=MAU_NUT_XAM,
             hover_color=MAU_NUT_XAM_HOVER,
+            border_radius=10,
         )
 
     def toan_do_thanh_o_co(self, x: int, y: int) -> Optional[chess.Square]:
@@ -385,14 +385,14 @@ class GameCoVuong:
                     text_color = MAU_O_TOI if la_o_sang else MAU_O_SANG
                     rank_str = str(8 - row)
                     lbl = self.font_toado.render(rank_str, True, text_color)
-                    self.screen.blit(lbl, (rect.x + 3, rect.y + 2))
+                    self.screen.blit(lbl, (rect.x + 4, rect.y + 3))
 
                 # Tọa độ chữ cột (a-h) ở mép dưới
                 if row == 7:
                     text_color = MAU_O_TOI if la_o_sang else MAU_O_SANG
                     file_str = files[col]
                     lbl = self.font_toado.render(file_str, True, text_color)
-                    self.screen.blit(lbl, (rect.right - 10, rect.bottom - 15))
+                    self.screen.blit(lbl, (rect.right - 14, rect.bottom - 18))
 
         # Hiển thị gợi ý các ô đi hợp lệ
         for move in self.cac_nuoc_di_hop_le_o_chon:
@@ -402,12 +402,12 @@ class GameCoVuong:
 
             if target_piece:
                 pygame.draw.circle(
-                    self.screen, (105, 115, 65), center, KICH_THUOC_O // 2 - 5, width=4
+                    self.screen, (105, 115, 65), center, KICH_THUOC_O // 2 - 6, width=5
                 )
             else:
-                pygame.draw.circle(self.screen, (105, 115, 65), center, 10)
+                pygame.draw.circle(self.screen, (105, 115, 65), center, 13)
 
-        # Vẽ quân cờ ở giữa ô cờ (padding 6px)
+        # Vẽ quân cờ ở giữa ô cờ (padding 8px)
         for square, piece in self.ban_co.board.piece_map().items():
             color_prefix = "w" if piece.color == chess.WHITE else "b"
             piece_type_map = {
@@ -426,8 +426,8 @@ class GameCoVuong:
 
     def ve_sidebar(self, mouse_pos: Tuple[int, int]):
         """Vẽ Sidebar bằng hệ thống căn giữa (midleft/midright) tuyệt đối."""
-        bx = BAN_CO_SIZE + 16
-        bw = SIDEBAR_WIDTH - 32
+        bx = BAN_CO_SIZE + 24
+        bw = SIDEBAR_WIDTH - 48
 
         # 1. Nền Sidebar
         pygame.draw.rect(
@@ -436,57 +436,57 @@ class GameCoVuong:
 
         # 2. Tiêu đề chính
         title = self.font_tieu_de.render("CỜ VUA AI", True, MAU_VANG_DIEM)
-        self.screen.blit(title, (bx, 18))
+        self.screen.blit(title, (bx, 24))
 
         subtitle = self.font_chu.render("Minimax & Alpha-Beta Pruning", True, MAU_CHU_PHU)
-        self.screen.blit(subtitle, (bx, 48))
+        self.screen.blit(subtitle, (bx, 60))
 
         # 3. Card trạng thái lượt đi
-        status_box = pygame.Rect(bx, 76, bw, 46)
-        pygame.draw.rect(self.screen, MAU_THE_CARD, status_box, border_radius=8)
-        pygame.draw.rect(self.screen, MAU_VIEN_CARD, status_box, width=1, border_radius=8)
+        status_box = pygame.Rect(bx, 96, bw, 56)
+        pygame.draw.rect(self.screen, MAU_THE_CARD, status_box, border_radius=10)
+        pygame.draw.rect(self.screen, MAU_VIEN_CARD, status_box, width=1, border_radius=10)
 
         cy_status = status_box.centery
-        dot_center = (bx + 20, cy_status)
+        dot_center = (bx + 26, cy_status)
 
         if self.ban_co.la_chieu_het():
             nguoi_thang = "AI (Đen) Thắng" if self.ban_co.luot_di == chess.WHITE else "Bạn (Trắng) Thắng"
             status_txt = self.font_muc.render(f"Chiếu hết! {nguoi_thang}", True, MAU_CANH_BAO)
-            pygame.draw.circle(self.screen, MAU_CANH_BAO, dot_center, 6)
+            pygame.draw.circle(self.screen, MAU_CANH_BAO, dot_center, 7)
         elif self.ban_co.la_hoa_co():
             status_txt = self.font_muc.render("Hòa cờ!", True, MAU_VANG_DIEM)
-            pygame.draw.circle(self.screen, MAU_VANG_DIEM, dot_center, 6)
+            pygame.draw.circle(self.screen, MAU_VANG_DIEM, dot_center, 7)
         elif self.ai_dang_tinh:
             status_txt = self.font_muc.render("AI đang tính toán...", True, (80, 185, 255))
-            pygame.draw.circle(self.screen, (80, 185, 255), dot_center, 6)
+            pygame.draw.circle(self.screen, (80, 185, 255), dot_center, 7)
         else:
             if self.ban_co.luot_di == chess.WHITE:
                 status_txt = self.font_muc.render("Lượt của bạn (Quân Trắng)", True, MAU_CHU_CHINH)
-                pygame.draw.circle(self.screen, (240, 240, 240), dot_center, 6)
+                pygame.draw.circle(self.screen, (240, 240, 240), dot_center, 7)
             else:
                 status_txt = self.font_muc.render("Lượt của AI (Quân Đen)", True, (200, 190, 180))
-                pygame.draw.circle(self.screen, (100, 100, 100), dot_center, 6)
+                pygame.draw.circle(self.screen, (100, 100, 100), dot_center, 7)
 
-        rect_st = status_txt.get_rect(midleft=(bx + 36, cy_status))
+        rect_st = status_txt.get_rect(midleft=(bx + 46, cy_status))
         self.screen.blit(status_txt, rect_st)
 
         # 4. Card cài đặt (Thuật toán & Độ sâu)
-        card_setting = pygame.Rect(bx, 134, bw, 128)
-        pygame.draw.rect(self.screen, MAU_THE_CARD, card_setting, border_radius=8)
-        pygame.draw.rect(self.screen, MAU_VIEN_CARD, card_setting, width=1, border_radius=8)
+        card_setting = pygame.Rect(bx, 168, bw, 156)
+        pygame.draw.rect(self.screen, MAU_THE_CARD, card_setting, border_radius=10)
+        pygame.draw.rect(self.screen, MAU_VIEN_CARD, card_setting, width=1, border_radius=10)
 
         lbl_algo = self.font_nho_dam.render("THUẬT TOÁN TÌM KIẾM", True, MAU_CHU_PHU)
-        self.screen.blit(lbl_algo, (bx + 12, 147))
+        self.screen.blit(lbl_algo, (bx + 16, 184))
 
         self.btn_alphabeta.active = (self.thuat_toan_ai == "Alpha-Beta")
         self.btn_minimax.active = (self.thuat_toan_ai == "Minimax")
         self.btn_alphabeta.ve(self.screen, mouse_pos)
         self.btn_minimax.ve(self.screen, mouse_pos)
 
-        # Căn chỉnh hàng độ sâu cùng trục ngang cy = 232
-        cy_depth = 232
+        # Căn chỉnh hàng độ sâu cùng trục ngang cy = 288
+        cy_depth = 288
         lbl_depth = self.font_chu.render("Độ sâu tìm kiếm (Depth):", True, MAU_CHU_CHINH)
-        rect_lbl_depth = lbl_depth.get_rect(midleft=(bx + 12, cy_depth))
+        rect_lbl_depth = lbl_depth.get_rect(midleft=(bx + 16, cy_depth))
         self.screen.blit(lbl_depth, rect_lbl_depth)
 
         self.btn_giam_depth.ve(self.screen, mouse_pos)
@@ -498,12 +498,12 @@ class GameCoVuong:
         self.screen.blit(txt_depth, rect_txt_depth)
 
         # 5. Card báo cáo thống kê AI
-        card_stats = pygame.Rect(bx, 274, bw, 272)
-        pygame.draw.rect(self.screen, MAU_THE_CARD, card_stats, border_radius=8)
-        pygame.draw.rect(self.screen, MAU_VIEN_CARD, card_stats, width=1, border_radius=8)
+        card_stats = pygame.Rect(bx, 340, bw, 336)
+        pygame.draw.rect(self.screen, MAU_THE_CARD, card_stats, border_radius=10)
+        pygame.draw.rect(self.screen, MAU_VIEN_CARD, card_stats, width=1, border_radius=10)
 
         lbl_stats_head = self.font_nho_dam.render("THỐNG KÊ NƯỚC ĐI AI", True, MAU_CHU_PHU)
-        self.screen.blit(lbl_stats_head, (bx + 14, 286))
+        self.screen.blit(lbl_stats_head, (bx + 18, 356))
 
         items = [
             ("Nước AI vừa chọn", str(self.thong_ke_ai["nuoc_di"])),
@@ -515,14 +515,14 @@ class GameCoVuong:
             ("Độ sâu áp dụng", f"Depth {self.do_sau_ai}"),
         ]
 
-        # Tọa độ các hàng phân bố đều đặn
-        y_center_row = 318
+        # Tọa độ các hàng phân bố rộng rãi, thoáng
+        y_center_row = 396
         for i, (label, val) in enumerate(items):
             t_lbl = self.font_chu.render(label, True, MAU_CHU_PHU)
             t_val = self.font_chu_dam.render(val, True, MAU_CHU_CHINH)
 
-            rect_lbl = t_lbl.get_rect(midleft=(bx + 14, y_center_row))
-            rect_val = t_val.get_rect(midright=(bx + bw - 14, y_center_row))
+            rect_lbl = t_lbl.get_rect(midleft=(bx + 18, y_center_row))
+            rect_val = t_val.get_rect(midright=(bx + bw - 18, y_center_row))
 
             self.screen.blit(t_lbl, rect_lbl)
             self.screen.blit(t_val, rect_val)
@@ -532,10 +532,10 @@ class GameCoVuong:
                 pygame.draw.line(
                     self.screen,
                     (42, 40, 36),
-                    (bx + 14, y_center_row + 15),
-                    (bx + bw - 14, y_center_row + 15),
+                    (bx + 18, y_center_row + 19),
+                    (bx + bw - 18, y_center_row + 19),
                 )
-            y_center_row += 31
+            y_center_row += 38
 
         # 6. Các nút Ván mới & Hoàn tác
         self.btn_choi_moi.ve(self.screen, mouse_pos)
