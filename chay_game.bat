@@ -1,18 +1,19 @@
 @echo off
-chcp 65001 >nul
-title Cờ Vua AI - Game Launcher
+cd /d "%~dp0"
+title Co Vua AI - Game Launcher
 cls
 echo ========================================================
-echo               KHỞI ĐỘNG TRÒ CHƠI CỜ VUA AI
+echo               KHOI DONG TRO CHOI CO VUA AI
 echo ========================================================
-echo Thuật toán: Minimax và Alpha-Beta Pruning
-echo Đang nạp tài nguyên và mở giao diện...
+echo Thuat toan: Minimax va Alpha-Beta Pruning
+echo Dang mo giao dien game...
 echo.
 
 python main.py
 
-if %ERRORLEVEL% NEQ 0 (
+if errorlevel 1 (
     echo.
-    echo [LỖI] Không thể khởi chạy trò chơi. Vui lòng kiểm tra Python và các thư viện trong requirements.txt.
+    echo [LOI] Khong the khoi chay tro choi.
+    echo Vui long kiem tra Python va cac thu vien: pip install -r requirements.txt
     pause
 )
