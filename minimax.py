@@ -9,7 +9,7 @@ import time
 from typing import Tuple, Optional
 import chess
 
-from danh_gia import danh_gia_the_co, DIEM_CHIEU_HET
+from danh_gia import danh_gia_the_co, la_hoa_theo_luat, DIEM_CHIEU_HET
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -33,27 +33,28 @@ class MinimaxSearcher:
         """
         self.so_node_da_tham += 1
 
-        # Điều kiện dừng: Ván cờ kết thúc (chiếu hết hoặc hòa)
-        if board.is_checkmate():
-            # Nếu người vừa đi tạo ra chiếu hết:
-            # - Nếu đang ở lượt Trắng (tức Đen vừa đi và chiếu hết Trắng) -> Đen thắng
-            # - Nếu đang ở lượt Đen (tức Trắng vừa đi và chiếu hết Đen) -> Trắng thắng
-            # Bổ sung '+ depth' hoặc '- depth' để ưu tiên chiếu hết nhanh nhất và tránh bị chiếu hết lâu nhất
-            if board.turn == chess.WHITE:
-                return -DIEM_CHIEU_HET - depth
-            else:
-                return DIEM_CHIEU_HET + depth
-
-        if board.is_game_over():  # Hòa cờ (stalemate, repetition, 50-move, ...)
-            return 0
-
-        # Đạt tới độ sâu tối đa: Dùng hàm đánh giá tĩnh
+        # Đạt tới độ sâu tối đa: Dùng hàm đánh giá tĩnh (đã tự xử lý chiếu hết / hòa)
         if depth == 0:
             return danh_gia_the_co(board)
 
+        # Sinh nước đi MỘT lần duy nhất rồi dùng lại để kiểm tra kết thúc ván
         legal_moves = list(board.legal_moves)
+
+        # Điều kiện dừng: Hết nước đi -> chiếu hết (nếu đang bị chiếu) hoặc hòa pat
         if not legal_moves:
-            return danh_gia_the_co(board)
+            if board.is_check():
+                # Bên đang đến lượt bị chiếu hết:
+                # - Lượt Trắng (Đen vừa chiếu hết Trắng) -> Đen thắng -> điểm âm
+                # - Lượt Đen (Trắng vừa chiếu hết Đen) -> Trắng thắng -> điểm dương
+                # Bổ sung 'depth' để ưu tiên chiếu hết nhanh nhất và tránh bị chiếu hết sớm
+                if board.turn == chess.WHITE:
+                    return -DIEM_CHIEU_HET - depth
+                return DIEM_CHIEU_HET + depth
+            return 0
+
+        # Các trường hợp hòa khác (thiếu quân, lặp 3 lần, luật 50 nước)
+        if la_hoa_theo_luat(board):
+            return 0
 
         if maximizing:
             best_score = -float("inf")

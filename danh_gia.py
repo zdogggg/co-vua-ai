@@ -98,6 +98,18 @@ BANG_DIEM_VUA_TRUNG_CUOC = [
      20, 30, 10,  0,  0, 10, 30, 20
 ]
 
+# Vua ở tàn cuộc: Cần tiến ra trung tâm để hỗ trợ tốt và dồn vua đối phương
+BANG_DIEM_VUA_TAN_CUOC = [
+    -50,-40,-30,-20,-20,-30,-40,-50,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -50,-30,-30,-30,-30,-30,-30,-50
+]
+
 BANG_DIEM_VI_TRI = {
     chess.PAWN: BANG_DIEM_TOT,
     chess.KNIGHT: BANG_DIEM_MA,
@@ -126,6 +138,38 @@ def tinh_diem_vi_tri(loai_quan: chess.PieceType, o_co: chess.Square, mau_quan: b
         return table[o_co]
 
 
+def la_hoa_theo_luat(board: chess.Board) -> bool:
+    """
+    Kiểm tra nhanh các trường hợp hòa KHÔNG phụ thuộc vào việc còn nước đi hay không:
+    - Không đủ lực lượng để chiếu hết.
+    - Luật 50 nước (100 nửa nước không ăn quân, không đi tốt).
+    - Lặp lại thế cờ 3 lần.
+    Lưu ý: KHÔNG dùng can_claim_threefold_repetition() vì hàm này phải thử từng
+    nước đi hợp lệ nên rất chậm (chiếm hơn 50% thời gian tìm kiếm khi gọi ở node lá).
+    """
+    return (
+        board.is_insufficient_material()
+        or board.halfmove_clock >= 100
+        or board.is_repetition(3)
+    )
+
+
+def la_tan_cuoc(board: chess.Board) -> bool:
+    """
+    Xác định giai đoạn tàn cuộc theo quy tắc của Tomasz Michniewski:
+    - Cả hai bên đều không còn Hậu, HOẶC
+    - Bên nào còn Hậu thì chỉ còn tối đa thêm 1 quân nhẹ (Mã/Tượng), không còn Xe.
+    """
+    for mau in (chess.WHITE, chess.BLACK):
+        if board.pieces_mask(chess.QUEEN, mau):
+            so_quan_nhe = chess.popcount(
+                board.pieces_mask(chess.KNIGHT, mau) | board.pieces_mask(chess.BISHOP, mau)
+            )
+            if board.pieces_mask(chess.ROOK, mau) or so_quan_nhe > 1:
+                return False
+    return True
+
+
 def danh_gia_the_co(board: chess.Board) -> int:
     """
     Đánh giá thế cờ hiện tại.
@@ -140,16 +184,12 @@ def danh_gia_the_co(board: chess.Board) -> int:
         # Nếu lượt đi hiện tại là Đen mà bị chiếu hết -> Trắng thắng -> Điểm dương cực lớn
         return -DIEM_CHIEU_HET if board.turn == chess.WHITE else DIEM_CHIEU_HET
 
-    if (
-        board.is_stalemate()
-        or board.is_insufficient_material()
-        or board.can_claim_threefold_repetition()
-        or board.can_claim_fifty_moves()
-    ):
+    if board.is_stalemate() or la_hoa_theo_luat(board):
         return 0
 
     diem_trang = 0
     diem_den = 0
+    bang_vua = BANG_DIEM_VUA_TAN_CUOC if la_tan_cuoc(board) else BANG_DIEM_VUA_TRUNG_CUOC
 
     # 2. Duyệt qua từng quân cờ trên bàn cờ
     piece_map = board.piece_map()
@@ -157,7 +197,11 @@ def danh_gia_the_co(board: chess.Board) -> int:
         # Điểm cơ bản của loại quân
         gia_tri = GIA_TRI_QUAN.get(piece.piece_type, 0)
         # Điểm cộng thêm theo vị trí chiến lược
-        diem_vi_tri = tinh_diem_vi_tri(piece.piece_type, square, piece.color)
+        if piece.piece_type == chess.KING:
+            idx = chess.square_mirror(square) if piece.color == chess.WHITE else square
+            diem_vi_tri = bang_vua[idx]
+        else:
+            diem_vi_tri = tinh_diem_vi_tri(piece.piece_type, square, piece.color)
 
         tong_diem_quan = gia_tri + diem_vi_tri
 

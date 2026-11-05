@@ -59,17 +59,23 @@ pytest -v
 ## 3. Các Tính Năng Nổi Bật
 
 1. **Giao diện Pygame hiện đại**:
-   - Bàn cờ 8×8 màu sắc trang nhã, quân cờ sắc nét.
-   - Tô sáng ô đang chọn, các nước đi hợp lệ và nước đi vừa thực hiện.
-   - Hỗ trợ đầy đủ các luật đặc biệt: **Phong cấp tốt (Promotion)**, **Nhập thành (Castling)**, **Bắt tốt qua đường (En Passant)**.
-   - Nút **Hoàn tác (Undo)** và **Ván Mới (New Game)**.
+   - Bàn cờ 8×8 theo tông gỗ, quân cờ HD, **thanh lợi thế** dọc cạnh bàn cờ (giống Lichess).
+   - Đi quân bằng **click** hoặc **kéo-thả**, có **hiệu ứng trượt quân**.
+   - Tô sáng ô đang chọn, nước đi vừa thực hiện, **quầng đỏ khi Vua bị chiếu**; gợi ý nước hợp lệ dạng chấm (ô trống) / vòng tròn (ô ăn quân).
+   - Hỗ trợ đầy đủ luật đặc biệt: **Phong cấp tốt (có bảng chọn Hậu/Mã/Xe/Tượng)**, **Nhập thành**, **Bắt tốt qua đường**, hòa do **lặp 3 lần / luật 50 nước / pat / thiếu quân**.
+   - **Chọn màu quân** (cầm Đen thì bàn cờ tự lật và AI đi trước).
+   - Bảng **lịch sử nước đi** (ký hiệu SAN), thông báo kết quả ván cờ kèm lý do.
+   - Nút **Hoàn tác** và **Ván Mới** (dùng được cả khi AI đang suy nghĩ).
+   - Phím tắt: `Ctrl+Z` / `Backspace` = Hoàn tác, `N` = Ván mới, `Esc` = Bỏ chọn.
 2. **AI không làm đơ giao diện**:
-   - Sử dụng đa luồng (`threading.Thread`) để AI tính toán ở background, giao diện người dùng luôn mượt mà.
+   - AI tính toán trên **bản sao** bàn cờ ở luồng phụ (`threading.Thread`); chỉ luồng chính mới thay đổi bàn cờ nên không xảy ra xung đột dữ liệu giữa 2 luồng.
+   - Thanh trạng thái hiển thị thời gian AI đang suy nghĩ theo thời gian thực.
 3. **Thống kê chi tiết theo thời gian thực**:
-   - Hiển thị trực tiếp trên màn hình: Điểm thế cờ, Số node duyệt, Số lần cắt tỉa, Thời gian suy nghĩ (ms).
+   - Nước AI vừa chọn, thời gian suy nghĩ, số node duyệt, số lần cắt tỉa, điểm đánh giá, tốc độ (node/giây).
 4. **Tối ưu hóa Alpha-Beta Pruning**:
-   - Tích hợp kỹ thuật **Move Ordering** (ưu tiên duyệt nước bắt quân và nước chiếu trước).
-   - Giúp giảm tới **96% số node** và **tăng tốc tới 27 lần** so với Minimax thuần ở cùng độ sâu.
+   - **Move Ordering** theo **MVV-LVA** (ăn quân giá trị cao bằng quân giá trị thấp trước), phong cấp và nước chiếu.
+   - Giảm tới **96% số node** và **tăng tốc khoảng 20 lần** so với Minimax thuần ở cùng độ sâu.
+5. **Hàm đánh giá**: Giá trị quân + Piece-Square Tables, **bảng điểm Vua riêng cho tàn cuộc** (Vua tiến ra trung tâm để hỗ trợ chiếu hết).
 
 ---
 
@@ -79,13 +85,14 @@ Bảng trích xuất từ `so_sanh.py` trên thế cờ trung cuộc (*Italian G
 
 | Độ sâu | Thuật toán | Điểm đánh giá | Số node đã duyệt | Số lần cắt tỉa | Thời gian (ms) | Hiệu quả tăng tốc |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Depth 1** | Minimax | +130 | 33 | 0 | 19.4 ms | 1.0x (gốc) |
-| **Depth 1** | Alpha-Beta | +130 | 33 | 0 | 17.3 ms | 1.1x |
-| **Depth 2** | Minimax | -60 | 1,183 | 0 | 445.7 ms | 1.0x (gốc) |
-| **Depth 2** | Alpha-Beta | -60 | 210 | 28 | 74.4 ms | **6.0x** (giảm 82.2% node) |
-| **Depth 3** | Minimax | +140 | 38,322 | 0 | 14,431.9 ms | 1.0x (gốc) |
-| **Depth 3** | Alpha-Beta | +140 | 1,502 | 79 | 518.1 ms | **27.9x** (giảm 96.1% node) |
+| **Depth 1** | Minimax | +130 | 33 | 0 | 1.7 ms | 1.0x (gốc) |
+| **Depth 1** | Alpha-Beta | +130 | 33 | 0 | 1.9 ms | 0.9x |
+| **Depth 2** | Minimax | -60 | 1,183 | 0 | 55.1 ms | 1.0x (gốc) |
+| **Depth 2** | Alpha-Beta | -60 | 210 | 28 | 18.3 ms | **3.0x** (giảm 82.2% node) |
+| **Depth 3** | Minimax | +140 | 38,322 | 0 | 1,754.3 ms | 1.0x (gốc) |
+| **Depth 3** | Alpha-Beta | +140 | 1,458 | 78 | 87.0 ms | **20.2x** (giảm 96.2% node) |
 
 > **Nhận xét quan trọng để bảo vệ đồ án:**
 > - Điểm số đánh giá của Minimax và Alpha-Beta **hoàn toàn giống nhau** ở mọi độ sâu, chứng minh thuật toán cắt tỉa được cài đặt hoàn toàn chính xác theo lý thuyết toán học (không bị cắt tỉa nhầm nhánh tối ưu).
+> - Ở depth 1, Alpha-Beta không thể cắt tỉa (chỉ có 1 tầng) nên chậm hơn một chút do tốn chi phí sắp xếp nước đi.
 > - Càng tăng độ sâu tìm kiếm, hiệu quả của cắt tỉa Alpha-Beta càng vượt trội theo hàm mũ.

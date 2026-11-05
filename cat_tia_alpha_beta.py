@@ -9,7 +9,7 @@ import time
 from typing import Tuple, Optional, List
 import chess
 
-from danh_gia import danh_gia_the_co, DIEM_CHIEU_HET
+from danh_gia import danh_gia_the_co, la_hoa_theo_luat, DIEM_CHIEU_HET
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -29,12 +29,12 @@ def sap_xep_nuoc_di(board: chess.Board, legal_moves: List[chess.Move]) -> List[c
     def diem_uu_tien(move: chess.Move) -> int:
         diem = 0
         if board.is_capture(move):
-            # Nước ăn quân: ưu tiên quân ăn có giá trị thấp ăn quân giá trị cao (MVV-LVA sơ bộ)
+            # MVV-LVA (Most Valuable Victim - Least Valuable Attacker):
+            # ưu tiên ăn quân giá trị cao bằng quân giá trị thấp (VD: Tốt ăn Hậu xét trước Hậu ăn Tốt)
             victim = board.piece_at(move.to_square)
-            if victim:
-                diem += 1000 + victim.piece_type * 10
-            else:
-                diem += 1000  # En passant
+            attacker = board.piece_at(move.from_square)
+            victim_type = victim.piece_type if victim else chess.PAWN  # En passant ăn Tốt
+            diem += 1000 + victim_type * 10 - attacker.piece_type
         if move.promotion:
             diem += 900
         if board.gives_check(move):
@@ -62,23 +62,28 @@ class AlphaBetaSearcher:
         """
         self.so_node_da_tham += 1
 
-        # Điều kiện kết thúc ván cờ
-        if board.is_checkmate():
-            if board.turn == chess.WHITE:
-                return -DIEM_CHIEU_HET - depth
-            else:
-                return DIEM_CHIEU_HET + depth
-
-        if board.is_game_over():
-            return 0
-
-        # Đạt tới độ sâu tối đa
+        # Đạt tới độ sâu tối đa: Dùng hàm đánh giá tĩnh (đã tự xử lý chiếu hết / hòa)
         if depth == 0:
             return danh_gia_the_co(board)
 
+        # Sinh nước đi MỘT lần duy nhất rồi dùng lại để kiểm tra kết thúc ván
         legal_moves = list(board.legal_moves)
+
+        # Điều kiện dừng: Hết nước đi -> chiếu hết (nếu đang bị chiếu) hoặc hòa pat
         if not legal_moves:
-            return danh_gia_the_co(board)
+            if board.is_check():
+                # Bên đang đến lượt bị chiếu hết:
+                # - Lượt Trắng (Đen vừa chiếu hết Trắng) -> Đen thắng -> điểm âm
+                # - Lượt Đen (Trắng vừa chiếu hết Đen) -> Trắng thắng -> điểm dương
+                # Bổ sung 'depth' để ưu tiên chiếu hết nhanh nhất và tránh bị chiếu hết sớm
+                if board.turn == chess.WHITE:
+                    return -DIEM_CHIEU_HET - depth
+                return DIEM_CHIEU_HET + depth
+            return 0
+
+        # Các trường hợp hòa khác (thiếu quân, lặp 3 lần, luật 50 nước)
+        if la_hoa_theo_luat(board):
+            return 0
 
         if self.su_dung_sap_xep:
             legal_moves = sap_xep_nuoc_di(board, legal_moves)

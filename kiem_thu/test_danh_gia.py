@@ -36,3 +36,26 @@ def test_uu_the_quan_so():
     board.remove_piece_at(chess.D8)
     # Trắng phải có điểm dương cao
     assert danh_gia_the_co(board) > 800
+
+
+def test_hoa_do_lap_lai_3_lan():
+    board = chess.Board()
+    for m in ["Nf3", "Nf6", "Ng1", "Ng8", "Nf3", "Nf6", "Ng1", "Ng8"]:
+        board.push_san(m)
+    assert board.is_repetition(3)
+    assert danh_gia_the_co(board) == 0
+
+
+def test_nhan_dien_tan_cuoc():
+    from danh_gia import la_tan_cuoc
+    # Khai cuộc đủ quân -> chưa phải tàn cuộc
+    assert not la_tan_cuoc(chess.Board())
+    # Chỉ còn Vua + Xe + Tốt -> tàn cuộc
+    assert la_tan_cuoc(chess.Board("8/5pk1/4p3/R7/8/8/5K2/7r w - - 0 1"))
+
+
+def test_vua_tan_cuoc_uu_tien_trung_tam():
+    # Tàn cuộc: Vua Trắng ở trung tâm phải được chấm cao hơn Vua Trắng ở góc
+    vua_trung_tam = chess.Board("7k/8/8/8/4K3/8/P7/8 w - - 0 1")
+    vua_o_goc = chess.Board("7k/8/8/8/8/8/P7/K7 w - - 0 1")
+    assert danh_gia_the_co(vua_trung_tam) > danh_gia_the_co(vua_o_goc)

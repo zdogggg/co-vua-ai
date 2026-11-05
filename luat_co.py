@@ -99,15 +99,24 @@ class BanCo:
         )
 
     def da_ket_thuc(self) -> bool:
-        """Kiểm tra ván cờ đã kết thúc chưa (chiếu hết hoặc hòa cờ)."""
-        return self.board.is_game_over()
+        """
+        Kiểm tra ván cờ đã kết thúc chưa (chiếu hết hoặc hòa cờ).
+        claim_draw=True để đồng bộ với la_hoa_co(): lặp 3 lần / luật 50 nước cũng kết thúc ván.
+        """
+        return self.board.is_game_over(claim_draw=True)
+
+    def lay_ket_thuc(self) -> Optional[chess.Outcome]:
+        """
+        Trả về thông tin kết thúc ván (người thắng + lý do), hoặc None nếu ván đang tiếp tục.
+        """
+        return self.board.outcome(claim_draw=True)
 
     def ket_qua(self) -> str:
         """
         Trả về kết quả ván cờ:
         '1-0' (Trắng thắng), '0-1' (Đen thắng), '1/2-1/2' (Hòa), '*' (Đang tiếp tục).
         """
-        return self.board.result()
+        return self.board.result(claim_draw=True)
 
     def in_ban_co(self):
         """In bàn cờ trực quan ra terminal."""
